@@ -12,7 +12,7 @@ const StatusMaster = sequelize.define(
     code: {
       type: DataTypes.STRING(50),
       allowNull: false,
-      primaryKey: true, // <- comma added
+      // primaryKey: true,
       unique: true,
       defaultValue: "TO_DO",
     },
@@ -39,9 +39,11 @@ const StatusMaster = sequelize.define(
     },
     created_by: {
       type: DataTypes.INTEGER,
+      references: { model: "users", key: "id" },
     },
     updated_by: {
       type: DataTypes.INTEGER,
+      references: { model: "users", key: "id" },
     },
   },
   {

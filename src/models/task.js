@@ -1,61 +1,49 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
-const StatusMaster = require("./statusMaster");
 
-const Task = sequelize.define(
-  "Task",
+const TeamMember = sequelize.define(
+  "TeamMember",
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    name: {
-      type: DataTypes.STRING(50),
+    task_id: {
+      type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: "tasks", key: "id" },
     },
-    desc: {
-      type: DataTypes.TEXT,
+    user_id: {
+      type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: "users", key: "id" },
     },
     status: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
-    status_code: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-      references: {
-        model: StatusMaster,
-        key: "code",
-      },
-    },
     deleted: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
-    created_At: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updated_At: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
     created_by: {
       type: DataTypes.INTEGER,
+      allowNull: true, // system-generated rows can have null
+      references: { model: "users", key: "id" },
     },
     updated_by: {
       type: DataTypes.INTEGER,
-    },
-    due_date: {
-      type: DataTypes.DATE,
+      allowNull: true,
+      references: { model: "users", key: "id" },
     },
   },
   {
-    tableName: "tasks",
-    timestamps: false,
+    tableName: "team_members",
+    timestamps: true, // Sequelize manages created_at and updated_at
+    createdAt: "created_at", // maps createdAt to snake_case
+    updatedAt: "updated_at", // maps updatedAt to snake_case
   }
 );
 
-module.exports = Task;
+module.exports = TeamMember;

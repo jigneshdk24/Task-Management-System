@@ -15,6 +15,7 @@ const authMiddleware = (req, res, next) => {
     req.user = {
       id: userPayload.id,
       email: userPayload.email,
+      is_admin: userPayload.is_admin,
     };
 
     next();
@@ -23,4 +24,4 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-module.exports = { authMiddleware };
+module.exports = authMiddleware;

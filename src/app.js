@@ -8,9 +8,10 @@ const sequelize = require("./config/database");
 const { User, Task, StatusMaster, TeamMember } = require("./models/index");
 
 const userRoutes = require("./routes/users");
-const statusMasterRoutes = require("./middleware/statusMaster");
+const statusMasterRoutes = require("./routes/statusMaster");
 const taskRoutes = require("./routes/taskRoutes");
-const { authMiddleware } = require("./middleware/authMiddleware");
+const teamMemberRoutes = require("./routes/TeamMemberRoutes");
+const authMiddleware = require("./middleware/authMiddleware");
 
 const app = express();
 
@@ -20,9 +21,11 @@ app.use(cors());
 app.use("/users", userRoutes);
 app.use("/status", authMiddleware, statusMasterRoutes);
 app.use("/tasks", authMiddleware, taskRoutes);
+app.use("/", teamMemberRoutes);
+
 // Sync DB
 sequelize
-  .sync()
+  .sync({ alter: true })
   .then(() => {
     console.log("Database synced");
   })
@@ -30,7 +33,6 @@ sequelize
     console.error("Sync error:", err);
   });
 
-// Start server
 app.listen(3001, () => {
   console.log("Server running on port 3001");
 });
