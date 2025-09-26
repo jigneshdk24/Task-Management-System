@@ -4,25 +4,17 @@ const DB_NAME = process.env.DATABASE_NAME;
 const USER_NAME = process.env.USER_NAME;
 const PASSWORD = process.env.PASSWORD;
 const HOST = process.env.HOST;
-const SQLITE_FILE = process.env.SQLITE_FILE;
 
-let sequelize;
-
-if (SQLITE_FILE) {
-  sequelize = new Sequelize({
-    dialect: "sqlite",
-    storage: SQLITE_FILE,
-    logging: false,
-  });
-  console.log(`Using SQLite database at ${SQLITE_FILE}`);
-} else {
-  sequelize = new Sequelize(DB_NAME, USER_NAME, PASSWORD, {
+const sequelize = new Sequelize(
+  DB_NAME, // Database name
+  USER_NAME, // DB username
+  PASSWORD, // DB password
+  {
     host: HOST,
     dialect: "mysql",
-    logging: false,
-  });
-  console.log(`Using MySQL database ${DB_NAME} at ${HOST} as ${USER_NAME}`);
-}
+    logging: false, // Set to true if you want to see raw SQL logs
+  }
+);
 
 // Test the connection
 sequelize
