@@ -108,16 +108,24 @@ const getAllTask = async (req, res) => {
       },
     });
   }
-  res.json(tasks);
+res.json(tasks);
 };
-console.log("here");
 // Assign users to a task (admin or creator only)
 const assignUsers = async (req, res) => {
   const taskId = req.params.id;
   const { userIds } = req.body;
 
   try {
-    onsole.log("Incoming userIds:", userIds);
+    console.log("Incoming userIds:", userIds);
+    if (!Array.isArray(userIds)) {
+      return res.status(400).json({ message: "userIds must be an array" });
+    }
+    const { Op } = require("sequelize");
+    const normalizedUserIds = [...new Set(
+      userIds
+        .map((value) => Number(value))
+        .filter((value) => Number.isInteger(value) && value > 0)
+    )];
     const task = await Task.findByPk(taskId);
     if (!task) return res.status(404).json({ message: "Task not found" });
 
@@ -125,13 +133,38 @@ const assignUsers = async (req, res) => {
       return res.status(403).json({ message: "Forbidden" });
     }
 
-    // await TeamMember.destroy({ where: { task_id: taskId } });
+    // Find existing assignments to avoid duplicates
+    const existingAssignments = await TeamMember.findAll({
+      where: { task_id: taskId, user_id: { [Op.in]: normalizedUserIds } },
+      attributes: ["user_id"],
+    });
+    const existingUserIdSet = new Set(existingAssignments.map((tm) => tm.user_id));
+    const newAssigneeIds = normalizedUserIds.filter((id) => !existingUserIdSet.has(id));
 
-    await Promise.all(
-      userIds.map((uid) => TeamMember.create({ task_id: taskId, user_id: uid }))
-    );
+    if (newAssigneeIds.length === 0) {
+      return res.json({ message: "No new assignees to add", added: 0, skipped: [...existingUserIdSet] });
+    }
 
-    res.json({ message: "Assignees updated" });
+    // Validate that new users exist
+    const existingUsers = await User.findAll({
+      where: { id: { [Op.in]: newAssigneeIds } },
+      attributes: ["id"],
+    });
+    const existingUserIdList = new Set(existingUsers.map((u) => u.id));
+    const invalidUserIds = newAssigneeIds.filter((id) => !existingUserIdList.has(id));
+    if (invalidUserIds.length > 0) {
+      return res.status(400).json({ message: "Some user ids do not exist", invalidUserIds });
+    }
+
+    const rowsToCreate = newAssigneeIds.map((uid) => ({
+      task_id: Number(taskId),
+      user_id: uid,
+      created_by: req.user.id,
+      updated_by: req.user.id,
+    }));
+    await TeamMember.bulkCreate(rowsToCreate);
+
+    res.json({ message: "Assignees updated", added: rowsToCreate.length, skipped: [...existingUserIdSet] });
   } catch (error) {
     console.error("Assign Users Error:", error);
     res
