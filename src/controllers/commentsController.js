@@ -46,6 +46,33 @@ exports.listTaskComments = async (req, res) => {
 		return res.status(500).json({ success: false, message: "Error listing comments" });
 	}
 };
+
+exports.listAllComments = async (req, res) => {
+	try {
+		const page = parseInt(req.query.page || "1", 10);
+		const limit = parseInt(req.query.limit || "50", 10);
+		const offset = (page - 1) * limit;
+		const order = req.query.order === "asc" ? "ASC" : "DESC";
+		const where = {};
+		if (req.query.task_id) where.task_id = req.query.task_id;
+		if (req.query.user_id) where.user_id = req.query.user_id;
+		if (req.query.status_id) where.status_id = req.query.status_id;
+
+		const { rows, count } = await Comment.findAndCountAll({
+			where,
+			include: [
+				{ model: User, attributes: ["id", "name", "email"] },
+				{ model: Task, attributes: ["id", "name", "created_by"] },
+			],
+			order: [["created_at", order]],
+			limit,
+			offset,
+		});
+		return res.json({ success: true, data: rows, meta: { page, limit, count } });
+	} catch (err) {
+		return res.status(500).json({ success: false, message: "Error listing comments" });
+	}
+};
 exports.updateComment = async (req, res) => {
 	try {
 		const { id } = req.params;
