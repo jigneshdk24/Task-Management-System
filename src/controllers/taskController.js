@@ -2,7 +2,7 @@ const { Task, TeamMember, User } = require("../models");
 
 // Create Task (any authenticated user)
 const createTask = async (req, res) => {
-  const { name, desc, status_code, due_date } = req.body;
+  let { name, desc, status_code, due_date } = req.body;
 
   try {
     // 1. Check if a task with the same name already exists
@@ -11,6 +11,18 @@ const createTask = async (req, res) => {
       return res
         .status(400)
         .json({ success: false, message: "Task name already exists" });
+    }
+
+    // Normalize/validate status_code against status_master.code
+    if (!status_code || typeof status_code !== "string") {
+      status_code = "TO_DO"; // default to a valid code
+    } else {
+      status_code = status_code.trim().toUpperCase();
+    }
+    const { StatusMaster } = require("../models");
+    const statusExists = await StatusMaster.findOne({ where: { code: status_code } });
+    if (!statusExists) {
+      return res.status(400).json({ success: false, message: "Invalid status_code" });
     }
 
     // 2. Create the task

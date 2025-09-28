@@ -9,9 +9,9 @@ const Task = sequelize.define(
     name: { type: DataTypes.STRING(100), allowNull: false, unique: true },
     desc: { type: DataTypes.TEXT, allowNull: true },
     status_code: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING(50),
       allowNull: false,
-      references: { model: "status_master", key: "id" },
+      references: { model: "status_master", key: "code" },
     },
     due_date: { type: DataTypes.DATE, allowNull: true },
     status: { type: DataTypes.TINYINT, defaultValue: 1 },

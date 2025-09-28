@@ -8,9 +8,9 @@ User.hasMany(Task, { foreignKey: "created_by" });
 Task.belongsTo(User, { foreignKey: "created_by" });
 
 // 2. StatusMaster has many Tasks (status relationship)
-// Using status_id instead of status_code is recommended
-StatusMaster.hasMany(Task, { foreignKey: "status_code", sourceKey: "id" });
-Task.belongsTo(StatusMaster, { foreignKey: "status_code", targetKey: "id" });
+// Align to status_master.code being the natural key
+StatusMaster.hasMany(Task, { foreignKey: "status_code", sourceKey: "code" });
+Task.belongsTo(StatusMaster, { foreignKey: "status_code", targetKey: "code" });
 
 // 3. Many-to-many between User and Task via TeamMember (team members)
 User.belongsToMany(Task, {
