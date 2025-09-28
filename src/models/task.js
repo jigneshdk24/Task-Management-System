@@ -1,49 +1,30 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 
-const TeamMember = sequelize.define(
-  "TeamMember",
+// Define Task model (tasks table)
+const Task = sequelize.define(
+  "Task",
   {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    task_id: {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    name: { type: DataTypes.STRING(100), allowNull: false, unique: true },
+    desc: { type: DataTypes.TEXT, allowNull: true },
+    status_code: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: { model: "tasks", key: "id" },
+      references: { model: "status_master", key: "id" },
     },
-    user_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: { model: "users", key: "id" },
-    },
-    status: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-    },
-    deleted: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-    created_by: {
-      type: DataTypes.INTEGER,
-      allowNull: true, // system-generated rows can have null
-      references: { model: "users", key: "id" },
-    },
-    updated_by: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: { model: "users", key: "id" },
-    },
+    due_date: { type: DataTypes.DATE, allowNull: true },
+    status: { type: DataTypes.TINYINT, defaultValue: 1 },
+    deleted: { type: DataTypes.TINYINT, defaultValue: 0 },
+    created_by: { type: DataTypes.INTEGER, allowNull: false },
+    updated_by: { type: DataTypes.INTEGER, allowNull: false },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+    updated_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   },
   {
-    tableName: "team_members",
-    timestamps: true, // Sequelize manages created_at and updated_at
-    createdAt: "created_at", // maps createdAt to snake_case
-    updatedAt: "updated_at", // maps updatedAt to snake_case
+    tableName: "tasks",
+    timestamps: false,
   }
 );
 
-module.exports = TeamMember;
+module.exports = Task;
