@@ -12,11 +12,9 @@ module.exports = async (req, res, next) => {
 		});
 		if (!task) return res.status(404).json({ message: "Task not found" });
 
-		// Permissions: admin OR task creator OR assignee
+		// Permissions: admin OR task creator
 		if (req.user.is_admin === 1) return next();
 		if (task.created_by === req.user.id) return next();
-		const assignedUserIds = (task.TeamMembers || []).map((tm) => tm.user_id);
-		if (assignedUserIds.includes(req.user.id)) return next();
 
 		return res.status(403).json({ message: "Forbidden" });
 	} catch (e) {
