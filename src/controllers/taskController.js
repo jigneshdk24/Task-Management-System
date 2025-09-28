@@ -1,4 +1,4 @@
-const { Task, TeamMember, User } = require("../models");
+const { Task, TeamMember, User, StatusMaster } = require("../models");
 
 // Create Task (any authenticated user)
 const createTask = async (req, res) => {
@@ -13,6 +13,14 @@ const createTask = async (req, res) => {
         .json({ success: false, message: "Task name already exists" });
     }
 
+    const statusExists = await StatusMaster.findOne({
+      where: { code: status_code },
+    });
+    if (!statusExists) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid status code" });
+    }
     // 2. Create the task
     const task = await Task.create({
       name,
@@ -117,7 +125,7 @@ const assignUsers = async (req, res) => {
   const { userIds } = req.body;
 
   try {
-    onsole.log("Incoming userIds:", userIds);
+    console.log("Incoming userIds:", userIds);
     const task = await Task.findByPk(taskId);
     if (!task) return res.status(404).json({ message: "Task not found" });
 
