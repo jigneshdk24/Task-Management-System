@@ -1,6 +1,7 @@
 const User = require("./user");
 const Task = require("./task");
 const StatusMaster = require("./statusMaster");
+const Comment = require("./comment");
 const TeamMember = require("./teamMember");
 // 1. User has many Tasks
 // 1. User has many Tasks
@@ -25,3 +26,12 @@ Task.belongsToMany(User, {
 });
 
 module.exports = { User, Task, StatusMaster, TeamMember };
+// 4. Comment associations
+Task.hasMany(Comment, { foreignKey: "task_id" });
+Comment.belongsTo(Task, { foreignKey: "task_id" });
+User.hasMany(Comment, { foreignKey: "user_id" });
+Comment.belongsTo(User, { foreignKey: "user_id" });
+StatusMaster.hasMany(Comment, { foreignKey: "status_id", sourceKey: "id" });
+Comment.belongsTo(StatusMaster, { foreignKey: "status_id", targetKey: "id" });
+
+module.exports = { User, Task, StatusMaster, TeamMember, Comment };

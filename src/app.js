@@ -11,6 +11,7 @@ const userRoutes = require("./routes/users");
 const statusMasterRoutes = require("./routes/statusMaster");
 const taskRoutes = require("./routes/taskRoutes");
 const teamMemberRoutes = require("./routes/TeamMemberRoutes");
+const commentRoutes = require("./routes/comments");
 const authMiddleware = require("./middleware/authMiddleware");
 
 const app = express();
@@ -21,6 +22,7 @@ app.use(cors());
 app.use("/users", userRoutes);
 app.use("/status", authMiddleware, statusMasterRoutes);
 app.use("/tasks", authMiddleware, taskRoutes);
+app.use("/", commentRoutes);
 app.use("/", teamMemberRoutes);
 
 // Sync DB
