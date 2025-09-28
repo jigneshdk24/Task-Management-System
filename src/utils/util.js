@@ -25,4 +25,10 @@ function generateStatusCode(input) {
 module.exports = {
   formatStatusName,
   generateStatusCode,
+  defaultStatuses: () => [
+    { code: "TO_DO", name: "To Do" },
+    { code: "IN_PROGRESS", name: "In Progress" },
+    { code: "DONE", name: "Done" },
+    { code: "BLOCKED", name: "Blocked" },
+  ],
 };

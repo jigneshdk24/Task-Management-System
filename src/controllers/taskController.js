@@ -1,4 +1,4 @@
-const { Task, TeamMember, User } = require("../models");
+const { Task, TeamMember, User, StatusMaster } = require("../models");
 
 // Create Task (any authenticated user)
 const createTask = async (req, res) => {
@@ -13,7 +13,13 @@ const createTask = async (req, res) => {
         .json({ success: false, message: "Task name already exists" });
     }
 
-    // 2. Create the task
+    // 2. Validate status_code exists in status_master
+    const statusExists = await StatusMaster.findOne({ where: { code: status_code } });
+    if (!statusExists) {
+      return res.status(400).json({ success: false, message: "Invalid status_code" });
+    }
+
+    // 3. Create the task
     const task = await Task.create({
       name,
       desc,
@@ -23,9 +29,7 @@ const createTask = async (req, res) => {
       updated_by: req.user.id,
     });
 
-    res
-      .status(201)
-      .json({ success: true, message: "Task created", data: task });
+    res.status(201).json({ success: true, message: "Task created", data: task });
   } catch (error) {
     console.error(error);
     if (error.name === "SequelizeUniqueConstraintError") {
