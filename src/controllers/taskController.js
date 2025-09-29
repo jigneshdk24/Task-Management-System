@@ -4,6 +4,13 @@ const { Task, TeamMember, User } = require("../models");
 const createTask = async (req, res) => {
   let { name, desc, status_code, due_date } = req.body;
 
+  // Admin-only guard
+  if (req.user?.is_admin !== 1) {
+    return res
+      .status(403)
+      .json({ success: false, message: "Only admins can create tasks" });
+  }
+
   try {
     // 1. Check if a task with the same name already exists
     const existingTask = await Task.findOne({ where: { name } });
