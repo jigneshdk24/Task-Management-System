@@ -4,8 +4,9 @@ const { Task, TeamMember, User } = require("../models");
 const createTask = async (req, res) => {
   let { name, desc, status_code, due_date } = req.body;
 
-  // Admin-only guard
-  if (req.user?.is_admin !== 1) {
+  // Admin-only guard (accept number/string/boolean)
+  const isAdmin = !!(req.user && (req.user.is_admin === 1 || req.user.is_admin === "1" || req.user.is_admin === true));
+  if (!isAdmin) {
     return res
       .status(403)
       .json({ success: false, message: "Only admins can create tasks" });
