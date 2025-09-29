@@ -51,12 +51,15 @@ const login = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const { password } = existingUser;
-    const isPasswordValid = await bcrypt.compare(payloadPassword, password);
-    console.log(isPasswordValid, password);
+    const hashedPassword = existingUser.password;
+    const isPasswordValid = await bcrypt.compare(payloadPassword, hashedPassword);
+    console.log(isPasswordValid, hashedPassword);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid credentials" });
     } else {
+      if (!JWT_SECRET) {
+        return res.status(500).json({ message: "Server misconfiguration: JWT secret missing" });
+      }
       const token = jwt.sign(
         {
           email: existingUser.email,
