@@ -24,4 +24,10 @@ Task.belongsToMany(User, {
   otherKey: "user_id",
 });
 
+// 4. Direct associations for convenience (used by includes in controllers)
+Task.hasMany(TeamMember, { foreignKey: "task_id" });
+TeamMember.belongsTo(Task, { foreignKey: "task_id" });
+User.hasMany(TeamMember, { foreignKey: "user_id" });
+TeamMember.belongsTo(User, { foreignKey: "user_id" });
+
 module.exports = { User, Task, StatusMaster, TeamMember };
