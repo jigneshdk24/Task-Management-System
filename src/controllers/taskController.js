@@ -91,8 +91,31 @@ const updateTask = async (req, res) => {
   }
   const task = await Task.findByPk(taskId);
   if (!task) return res.status(404).json({ message: "Task not found" });
-  await task.update(req.body);
-  res.json(task);
+  try {
+    // If status_code is provided, normalize and validate it
+    if (Object.prototype.hasOwnProperty.call(req.body, "status_code")) {
+      const { StatusMaster } = require("../models");
+      let nextCode = req.body.status_code;
+      if (typeof nextCode !== "string") {
+        return res.status(400).json({ message: "status_code must be a string" });
+      }
+      nextCode = nextCode.trim().toUpperCase();
+      const statusExists = await StatusMaster.findOne({ where: { code: nextCode } });
+      if (!statusExists) {
+        return res.status(400).json({ message: "Invalid status_code" });
+      }
+      req.body.status_code = nextCode;
+    }
+
+    // Ensure audit fields reflect the actor performing the update
+    req.body.updated_by = req.user.id;
+    req.body.updated_at = new Date();
+
+    await task.update(req.body);
+    res.json(task);
+  } catch (err) {
+    return res.status(500).json({ message: "Error updating task" });
+  }
 };
 
 // Delete Task (RBAC)
