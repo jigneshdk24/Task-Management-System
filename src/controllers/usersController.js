@@ -44,6 +44,7 @@ const login = async (req, res) => {
         "created_at",
         "updated_at",
         "is_admin",
+        "is_first_login",
       ],
     });
     console.log(existingUser);
@@ -59,6 +60,12 @@ const login = async (req, res) => {
     } else {
       if (!JWT_SECRET) {
         return res.status(500).json({ message: "Server misconfiguration: JWT secret missing" });
+      }
+
+      // Flip first login flag on first successful login
+      if (existingUser.is_first_login === 1) {
+        existingUser.is_first_login = 0;
+        await existingUser.save();
       }
       const token = jwt.sign(
         {
