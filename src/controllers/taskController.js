@@ -4,6 +4,10 @@ const { Task, TeamMember, User, StatusMaster } = require("../models");
 const createTask = async (req, res) => {
   const { name, desc, status_code, due_date } = req.body;
 
+  if (req.user.is_admin !== 1) {
+    return res.status(403).json({ message: "Only admins can create tasks" });
+  }
+
   try {
     // 1. Check if a task with the same name already exists
     const existingTask = await Task.findOne({ where: { name } });
@@ -79,6 +83,16 @@ const updateTask = async (req, res) => {
   }
   const task = await Task.findByPk(taskId);
   if (!task) return res.status(404).json({ message: "Task not found" });
+
+  req.body.updated_by = req.user.id;
+  req.body.updated_at = new Date();
+
+
+
+  
+
+  
+
   await task.update(req.body);
   res.json(task);
 };

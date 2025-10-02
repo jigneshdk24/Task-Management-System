@@ -19,6 +19,7 @@ const register = async (req, res) => {
       email,
       contact,
       password: hashedPassword,
+
       is_admin,
     });
     return res
@@ -44,6 +45,7 @@ const login = async (req, res) => {
         "created_at",
         "updated_at",
         "is_admin",
+        "is_first_login",
       ],
     });
     console.log(existingUser);
@@ -57,6 +59,10 @@ const login = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid credentials" });
     } else {
+      if (existingUser.is_first_login === 1) {
+        existingUser.is_first_login = 0;
+        await existingUser.save();
+      }
       const token = jwt.sign(
         {
           email: existingUser.email,

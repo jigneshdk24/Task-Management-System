@@ -44,9 +44,13 @@ const Task = sequelize.define(
     },
     created_by: {
       type: DataTypes.INTEGER,
+      allowNull: false,
+      references: { model: "users", key: "id" },
     },
     updated_by: {
       type: DataTypes.INTEGER,
+      allowNull: false,
+      references: { model: "users", key: "id" },
     },
     due_date: {
       type: DataTypes.DATE,
