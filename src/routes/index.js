@@ -4,11 +4,11 @@ const router = express.Router();
 // Helpers: middleware
 const authMiddleware = require("../middleware/authMiddleware");
 
-// Module routes
-const userRoutes = require("../routes/users");
-const taskRoutes = require("../routes/taskRoutes");
-const statusRoutes = require("../routes/statusMaster");
-const teamMemberRoutes = require("../routes/TeamMemberRoutes");
+// Module routes (new structure)
+const userRoutes = require("../modules/user/route");
+const taskRoutes = require("../modules/task/route");
+const statusRoutes = require("../modules/statusMaster/route");
+const teamMemberRoutes = require("../modules/teamMember/route");
 
 // Public routes
 router.use("/users", userRoutes);
