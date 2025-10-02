@@ -1,6 +1,8 @@
+const { success, error } = require("../../helpers/responseBuilder/response");
+const M = require("../../helpers/constants/messages");
+
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
 const { User } = require("../../models");
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -10,9 +12,8 @@ const register = async (req, res) => {
   const { name, email, contact, password, is_admin = 0 } = req.body;
   try {
     const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
-    }
+    if (existingUser) return error(res, M.user.exists, 400);
+
     const hashedPassword = await bcrypt.hash(password, 12);
     const newUser = await User.create({
       name,
@@ -21,11 +22,10 @@ const register = async (req, res) => {
       password: hashedPassword,
       is_admin,
     });
-    return res
-      .status(201)
-      .json({ message: "User registered successfully", user: newUser });
-  } catch (error) {
-    return res.status(500).json({ message: "Something went wrong." });
+
+    return success(res, M.user.registered, newUser);
+  } catch (e) {
+    return error(res, M.common.serverError, 500);
   }
 };
 
@@ -47,50 +47,38 @@ const login = async (req, res) => {
         "is_first_login",
       ],
     });
-    console.log(existingUser);
-    if (!existingUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!existingUser) return error(res, M.user.notFound, 404);
 
     const hashedPassword = existingUser.password;
     const isPasswordValid = await bcrypt.compare(payloadPassword, hashedPassword);
-    console.log(isPasswordValid, hashedPassword);
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    } else {
-      if (!JWT_SECRET) {
-        return res.status(500).json({ message: "Server misconfiguration: JWT secret missing" });
-      }
+    if (!isPasswordValid) return error(res, M.user.invalidCredentials, 401);
 
-      // Flip first login flag on first successful login
-      if (existingUser.is_first_login === 1) {
-        existingUser.is_first_login = 0;
-        await existingUser.save();
-      }
-      const token = jwt.sign(
-        {
-          email: existingUser.email,
-          id: existingUser.id,
-          is_admin: existingUser.is_admin,
-        },
-        JWT_SECRET,
-        { expiresIn: "10d" }
-      );
-      res.status(200).json({
-        message: "Login successfully",
-        user: {
-          id: existingUser.id,
-          name: existingUser.name,
-          email: existingUser.email,
-          contact: existingUser.contact,
-          is_admin: existingUser.is_admin,
-          createdAt: existingUser.created_at,
-        },
-        token,
-      });
+    if (!JWT_SECRET) return error(res, M.common.serverError, 500);
+
+    if (existingUser.is_first_login === 1) {
+      existingUser.is_first_login = 0;
+      await existingUser.save();
     }
-  } catch (error) {
-    return res.status(500).json({ message: "Something went wrong" });
+
+    const token = jwt.sign(
+      { email: existingUser.email, id: existingUser.id, is_admin: existingUser.is_admin },
+      JWT_SECRET,
+      { expiresIn: "10d" }
+    );
+
+    return success(res, M.user.loginSuccess, {
+      user: {
+        id: existingUser.id,
+        name: existingUser.name,
+        email: existingUser.email,
+        contact: existingUser.contact,
+        is_admin: existingUser.is_admin,
+        createdAt: existingUser.created_at,
+      },
+      token,
+    });
+  } catch (e) {
+    return error(res, M.common.serverError, 500);
   }
 };
 
@@ -100,22 +88,18 @@ const changePassword = async (req, res) => {
     const userId = req.user.id;
     const { oldPassword, newPassword } = req.body;
     const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return error(res, M.user.notFound, 404);
+
     const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Old password is incorrect" });
-    }
+    if (!isMatch) return error(res, M.user.invalidCredentials, 401);
+
     const hashedNewPassword = await bcrypt.hash(newPassword, 12);
     user.password = hashedNewPassword;
-    if (user.is_first_login === 1) {
-      user.is_first_login = 0;
-    }
+    if (user.is_first_login === 1) user.is_first_login = 0;
     await user.save();
-    return res.status(200).json({ message: "Password changed successfully" });
-  } catch (error) {
-    return res.status(500).json({ message: "Something went wrong" });
+    return success(res, M.user.passwordChanged);
+  } catch (e) {
+    return error(res, M.common.serverError, 500);
   }
 };
 
@@ -124,18 +108,12 @@ const forgotPassword = async (req, res) => {
   const { email } = req.body;
   try {
     const user = await User.findOne({ where: { email } });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    const resetToken = jwt.sign({ email: user.email }, JWT_SECRET, {
-      expiresIn: "15m",
-    });
-    console.log("Reset token:", resetToken);
-    return res
-      .status(200)
-      .json({ message: "Reset token generated", resetToken });
-  } catch (error) {
-    return res.status(500).json({ message: "Something went wrong" });
+    if (!user) return error(res, M.user.notFound, 404);
+
+    const resetToken = jwt.sign({ email: user.email }, JWT_SECRET, { expiresIn: "15m" });
+    return success(res, M.user.resetTokenCreated, { resetToken });
+  } catch (e) {
+    return error(res, M.common.serverError, 500);
   }
 };
 
@@ -145,24 +123,17 @@ const resetPassword = async (req, res) => {
   try {
     const payload = jwt.verify(resetToken, JWT_SECRET);
     const user = await User.findOne({ where: { email: payload.email } });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return error(res, M.user.notFound, 404);
+
     const hashedNewPassword = await bcrypt.hash(newPassword, 12);
     user.password = hashedNewPassword;
     await user.save();
-    return res.status(200).json({ message: "Password reset successfully" });
-  } catch (error) {
-    return res.status(400).json({ message: "Invalid or expired token" });
+    return success(res, M.user.passwordReset);
+  } catch (e) {
+    return error(res, M.common.invalidToken, 400);
   }
 };
 
-module.exports = {
-  register,
-  login,
-  changePassword,
-  forgotPassword,
-  resetPassword,
-};
+module.exports = { register, login, changePassword, forgotPassword, resetPassword };
 
 
